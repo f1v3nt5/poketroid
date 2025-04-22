@@ -10,11 +10,15 @@ migrate = Migrate()
 
 def create_app(config_class=Config):
     app = Flask(__name__)
-    CORS(app,
-         resources={r"/api/*": {"origins": "http://localhost:3000"}},
-         supports_credentials=True,
-         expose_headers=['Authorization']
-         )
+    CORS(app, resources={
+        r"/api/*": {
+            "origins": "http://localhost:3000",
+            "allow_headers": ["Authorization", "Content-Type"],
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "supports_credentials": True,
+            "expose_headers": ["X-Total-Count"]
+        }
+    })
     app.config.from_object(config_class)
 
     db.init_app(app)

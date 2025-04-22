@@ -61,7 +61,10 @@ class UserMediaList(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True, nullable=False)
     media_id = db.Column(db.Integer, db.ForeignKey('media.id'), primary_key=True, nullable=False)
-    list_type = db.Column(db.Enum('favorite', 'completed', 'planned', name='list_type'), nullable=False)
+    list_type = db.Column(
+        db.Enum('planned', 'completed', 'favorite', name='list_type'),
+        primary_key=True
+    )
     added_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 

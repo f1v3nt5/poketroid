@@ -61,30 +61,19 @@ def auth_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         token = request.headers.get('Authorization')
-
         if not token or not token.startswith('Bearer '):
-            current_app.logger.error('Отсутствует токен авторизации')
-            return jsonify({'error': 'Authorization required'}), 401
+            return jsonify({'error': 'Authorization header is missing or invalid'}), 401
 
         try:
             token = token.split()[1]
-            payload = jwt.decode(
-                token,
-                current_app.config['SECRET_KEY'],
-                algorithms=['HS256']
-            )
-            g.user_id = payload['sub']
-            current_app.logger.info(f'Успешная аутентификация пользователя {g.user_id}')
-
+            payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+            g.user_id = int(payload['sub'])
         except jwt.ExpiredSignatureError:
-            current_app.logger.warning('Истек срок действия токена')
             return jsonify({'error': 'Token expired'}), 401
-        except Exception as e:
-            current_app.logger.error(f'Ошибка декодирования токена: {str(e)}')
+        except (jwt.InvalidTokenError, KeyError):
             return jsonify({'error': 'Invalid token'}), 401
 
         return f(*args, **kwargs)
-
     return decorated_function
 
 
