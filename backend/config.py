@@ -13,7 +13,3 @@ class Config:
         'tmdb': os.environ.get('TMDB_API_KEY'),
         'mal': os.environ.get('MAL_API_KEY')
     }
-    CORS_ALLOW_HEADERS = ['Authorization', 'Content-Type']
-    CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
-    CORS_SUPPORTS_CREDENTIALS = True
-    CORS_ORIGIN_WHITELIST = ['http://localhost:3000']

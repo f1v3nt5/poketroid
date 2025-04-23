@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faStar, faClock, faCheckCircle } from '@fortawesome/free-regular-svg-icons';
+import {
+  faStar,
+  faClock,
+  faCheckCircle
+} from '@fortawesome/free-regular-svg-icons';
 import Navbar from '../Navbar';
 import '../../styles/Catalog.css';
 
@@ -29,13 +33,18 @@ const Catalog = () => {
       const params = {
         type: getContentType(selectedTab),
         sort_by: 'popularity',
-        query: query.trim() || undefined
+        query: query.trim() || undefined,
+        _: Date.now()
       };
 
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const headers = token ? {
+        Authorization: `Bearer ${token}`,
+        'Cache-Control': 'no-cache'
+      } : {};
 
       const response = await axios.get('http://localhost:5000/api/media', {
         params,
+        headers,
         cancelToken: new axios.CancelToken(c => cancelTokenRef.current = c)
       });
 
@@ -49,6 +58,25 @@ const Catalog = () => {
       setIsLoading(false);
     }
   }, [selectedTab, getContentType]);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          if (payload.exp * 1000 < Date.now()) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+          }
+        } catch (e) {
+          localStorage.clear();
+        }
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   useEffect(() => {
     if (searchTimeoutRef.current) {
@@ -67,105 +95,91 @@ const Catalog = () => {
     };
   }, [searchQuery, loadMediaData]);
 
-  useEffect(() => {
-    loadMediaData(searchQuery);
-  }, [searchQuery, selectedTab, loadMediaData]);
-
   const handleListChange = useCallback(async (mediaId, listType) => {
     try {
       const token = localStorage.getItem('token');
       const user = JSON.parse(localStorage.getItem('user'));
 
-      // Проверка наличия токена
       if (!token || !user) {
         alert('Для выполнения действия необходимо войти в систему');
         window.location.href = '/login';
         return;
       }
 
-      // Проверка срока действия токена
-      const decodedToken = JSON.parse(atob(token.split('.')[1]));
-      if (decodedToken.exp * 1000 < Date.now()) {
-        alert('Сессия истекла. Пожалуйста, войдите снова');
-        localStorage.clear();
-        window.location.reload();
-        return;
-      }
-
-      // Определяем текущий статус
-      const currentItem = media.find(item => item.id === mediaId);
-      const isActive = currentItem[`is_${listType}`];
-      const operation = isActive ? 'remove' : 'add';
-
-      // Удаление из противоположного списка
-      let oppositeType = null;
-      if (listType === 'planned') oppositeType = 'completed';
-      if (listType === 'completed') oppositeType = 'planned';
-
-      const requests = [];
-      if (oppositeType) {
-        requests.push(
-          axios.post('http://localhost:5000/api/media/list', {
-            media_id: mediaId,
-            list_type: oppositeType,
-            operation: 'remove'
-          }, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-        );
-      }
-
-      // Основной запрос
-      requests.push(
-        axios.post('http://localhost:5000/api/media/list', {
+      const response = await axios.post(
+        'http://localhost:5000/api/media/list',
+        {
           media_id: mediaId,
           list_type: listType,
-          operation: operation
-        }, {
+          operation: 'toggle'
+        },
+        {
           headers: { Authorization: `Bearer ${token}` }
-        })
+        }
       );
 
-      // Выполняем все запросы
-      const responses = await Promise.all(requests);
-      const lastResponse = responses[responses.length - 1].data;
-
-      // Обновляем состояние
       setMedia(prev => prev.map(item =>
         item.id === mediaId ? {
           ...item,
-          is_planned: lastResponse.is_planned,
-          is_completed: lastResponse.is_completed,
-          is_favorite: lastResponse.is_favorite
+          is_planned: response.data.is_planned,
+          is_completed: response.data.is_completed,
+          is_favorite: response.data.is_favorite
         } : item
       ));
     } catch (error) {
       console.error('Ошибка обновления списка:', error);
       alert(error.response?.data?.error || 'Ошибка обновления');
+      setMedia(prev => prev.map(item =>
+        item.id === mediaId ? {
+          ...item,
+          [listType === 'planned' ? 'is_planned' :
+           listType === 'completed' ? 'is_completed' :
+           'is_favorite']: !item[listType]
+        } : item
+      ));
     }
-  }, [media]);
+  }, []);
 
-  // Компонент карточки медиа
   const MediaCard = ({ item, onListChange }) => {
-    const [isProcessing, setIsProcessing] = useState(false);
+    const [localStatus, setLocalStatus] = useState({
+      planned: item.is_planned,
+      completed: item.is_completed,
+      favorite: item.is_favorite
+    });
+
+    useEffect(() => {
+      setLocalStatus({
+        planned: item.is_planned,
+        completed: item.is_completed,
+        favorite: item.is_favorite
+      });
+    }, [item]);
 
     const handleToggle = async (listType, e) => {
       e.stopPropagation();
-      setIsProcessing(true);
       try {
+        setLocalStatus(prev => ({
+          ...prev,
+          [listType]: !prev[listType],
+          ...(listType === 'planned' && { completed: false }),
+          ...(listType === 'completed' && { planned: false })
+        }));
         await onListChange(item.id, listType);
-      } finally {
-        setIsProcessing(false);
+      } catch (error) {
+        setLocalStatus({
+          planned: item.is_planned,
+          completed: item.is_completed,
+          favorite: item.is_favorite
+        });
       }
     };
 
-
     return (
-      <div className={`media-card ${isProcessing ? 'processing' : ''}`}>
+      <div className="media-card">
         <div className="favorite-icon" onClick={(e) => handleToggle('favorite', e)}>
           <FontAwesomeIcon
             icon={faStar}
-            className={item.is_favorite ? 'active favorite' : ''}
+            className={localStatus.favorite ? 'active favorite' : ''}
           />
         </div>
 
@@ -179,7 +193,7 @@ const Catalog = () => {
           <h3>{item.title}</h3>
           <div className="rating">
             <span>★ {item.rating?.toFixed(1) || 'N/A'}</span>
-            <span>{item.release_year}</span>
+            <span>{item.year}</span>
           </div>
         </div>
 
@@ -187,24 +201,21 @@ const Catalog = () => {
           <div className="planned" onClick={(e) => handleToggle('planned', e)}>
             <FontAwesomeIcon
               icon={faClock}
-              className={item.is_planned ? 'active planned' : ''}
+              className={localStatus.planned ? 'active planned' : ''}
             />
           </div>
 
           <div className="completed" onClick={(e) => handleToggle('completed', e)}>
             <FontAwesomeIcon
               icon={faCheckCircle}
-              className={item.is_completed ? 'active completed' : ''}
+              className={localStatus.completed ? 'active completed' : ''}
             />
           </div>
         </div>
-
-        {isProcessing && <div className="processing-overlay"></div>}
       </div>
     );
   };
 
-  // Оптимизация рендеринга
   const mediaToShow = useMemo(() =>
     isLoading ? prevData.current : media,
   [isLoading, media]);

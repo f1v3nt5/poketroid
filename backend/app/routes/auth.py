@@ -80,8 +80,21 @@ def auth_required(f):
 def auth_optional(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        g.user_id = None
         token = request.headers.get('Authorization')
+
         if token and token.startswith('Bearer '):
-            g.user_id = decode_token(token.split()[1])
+            try:
+                token_str = token.split()[1]
+                payload = jwt.decode(
+                    token_str,
+                    current_app.config['SECRET_KEY'],
+                    algorithms=['HS256']
+                )
+                g.user_id = int(payload['sub'])
+            except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, KeyError):
+                pass
+
         return f(*args, **kwargs)
+
     return decorated_function

@@ -1,19 +1,18 @@
 from flask import Blueprint, request, jsonify, g
 from flask_cors import cross_origin
-from app.models import Media, Genre, MediaGenre, UserMediaList, db
-from .auth import auth_required, auth_optional
-from sqlalchemy import and_, or_, literal
+from app.models import Media, UserMediaList, db
 from datetime import datetime
-
+from .auth import auth_required, auth_optional
 
 media_bp = Blueprint('media', __name__)
 
 
 @media_bp.route('/', methods=['GET'])
 @cross_origin(supports_credentials=True)
+@auth_optional
 def get_media():
     try:
-        # Получение параметров запроса
+        # Параметры запроса
         media_type = request.args.get('type')
         sort_by = request.args.get('sort_by', 'popularity')
         search_query = request.args.get('query')
@@ -23,12 +22,10 @@ def get_media():
         # Базовый запрос
         query = Media.query
 
-        # Фильтрация по типу
+        # Фильтрация
         if media_type and media_type in ['movie', 'anime', 'book']:
             query = query.filter(Media.type == media_type)
-
-        # Поиск по названию
-        if search_query and search_query.strip():
+        if search_query:
             query = query.filter(Media.title.ilike(f'%{search_query}%'))
 
         # Сортировка
@@ -40,36 +37,35 @@ def get_media():
         # Пагинация
         paginated = query.paginate(page=page, per_page=per_page, error_out=False)
 
-        # Получение статусов для авторизованных пользователей
+        # Получение статусов пользователя
         user_statuses = {}
-        if 'Authorization' in request.headers:
-            user_id = g.get('user_id')
-            if user_id:
-                user_media = UserMediaList.query.filter_by(user_id=user_id).all()
-                user_statuses = {
-                    item.media_id: {
-                        'planned': item.list_type == 'planned',
-                        'completed': item.list_type == 'completed',
-                        'favorite': item.list_type == 'favorite'
+        if g.get('user_id'):
+            user_media_entries = UserMediaList.query.filter_by(user_id=g.user_id).all()
+
+            # Собираем все статусы для каждого media_id
+            for entry in user_media_entries:
+                media_id = entry.media_id
+                if media_id not in user_statuses:
+                    user_statuses[media_id] = {
+                        'planned': False,
+                        'completed': False,
+                        'favorite': False
                     }
-                    for item in user_media
-                }
+                # Обновляем соответствующий статус
+                user_statuses[media_id][entry.list_type] = True
 
         # Формирование ответа
-        items = []
-        for media in paginated.items:
-            status = user_statuses.get(media.id, {})
-            items.append({
-                'id': media.id,
-                'title': media.title,
-                'type': media.type,
-                'cover_url': media.cover_url,
-                'rating': media.external_rating,
-                'year': media.release_year,
-                'is_planned': status.get('planned', False),
-                'is_completed': status.get('completed', False),
-                'is_favorite': status.get('favorite', False)
-            })
+        items = [{
+            'id': media.id,
+            'title': media.title,
+            'type': media.type,
+            'cover_url': media.cover_url,
+            'rating': media.external_rating,
+            'year': media.release_year,
+            'is_planned': user_statuses.get(media.id, {}).get('planned', False),
+            'is_completed': user_statuses.get(media.id, {}).get('completed', False),
+            'is_favorite': user_statuses.get(media.id, {}).get('favorite', False)
+        } for media in paginated.items]
 
         return jsonify({
             'items': items,
@@ -78,6 +74,7 @@ def get_media():
         }), 200
 
     except Exception as e:
+        print(e)
         return jsonify({'error': str(e)}), 500
 
 
@@ -89,7 +86,7 @@ def handle_media_list():
         data = request.get_json()
         user_id = g.user_id
 
-        # Валидация входных данных
+        # Валидация
         if not data or 'media_id' not in data or 'list_type' not in data:
             return jsonify({'error': 'Missing required fields'}), 400
 
@@ -102,30 +99,29 @@ def handle_media_list():
         if not media:
             return jsonify({'error': 'Media not found'}), 404
 
-        # Обработка взаимоисключающих статусов
-        opposite_type = None
+        # Удаление из противоположного списка
         if list_type in ['planned', 'completed']:
             opposite_type = 'completed' if list_type == 'planned' else 'planned'
+            # Удаляем ВСЕ записи противоположного типа
             UserMediaList.query.filter_by(
                 user_id=user_id,
                 media_id=media_id,
                 list_type=opposite_type
-            ).delete()
+            ).delete(synchronize_session=False)
+            db.session.commit()
 
-        # Поиск существующей записи
+        # Обработка операции
         existing = UserMediaList.query.filter_by(
             user_id=user_id,
             media_id=media_id,
             list_type=list_type
         ).first()
 
-        # Определение операции
         if operation == 'toggle':
             should_add = not existing
         else:
             should_add = operation == 'add'
 
-        # Выполнение операции
         if should_add:
             if not existing:
                 new_entry = UserMediaList(
@@ -141,45 +137,28 @@ def handle_media_list():
 
         db.session.commit()
 
-        # Получение актуального статуса
-        updated_status = {
-            'is_planned': False,
-            'is_completed': False,
-            'is_favorite': False
+        # Возвращаем обновленные статусы
+        current_status = {
+            'is_planned': UserMediaList.query.filter_by(
+                user_id=user_id,
+                media_id=media_id,
+                list_type='planned'
+            ).first() is not None,
+            'is_completed': UserMediaList.query.filter_by(
+                user_id=user_id,
+                media_id=media_id,
+                list_type='completed'
+            ).first() is not None,
+            'is_favorite': UserMediaList.query.filter_by(
+                user_id=user_id,
+                media_id=media_id,
+                list_type='favorite'
+            ).first() is not None
         }
 
-        entries = UserMediaList.query.filter_by(
-            user_id=user_id,
-            media_id=media_id
-        ).all()
-
-        for entry in entries:
-            key = f'is_{entry.list_type}'
-            if key in updated_status:
-                updated_status[key] = True
-
-        return jsonify(updated_status), 200
+        return jsonify(current_status), 200
 
     except Exception as e:
+        print(e)
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
-
-
-# Получение списка пользователя
-@media_bp.route('/user/<int:user_id>', methods=['GET'])
-def get_user_media(user_id):
-    list_type = request.args.get('list_type')
-
-    if not list_type or list_type not in ['favorite', 'completed', 'planned']:
-        return jsonify({'error': 'Invalid list type'}), 400
-
-    items = UserMediaList.query.filter_by(
-        user_id=user_id,
-        list_type=list_type
-    ).join(Media).all()
-
-    return jsonify([{
-        'media_id': item.media_id,
-        'title': item.media.title,
-        'added_at': item.added_at.isoformat()
-    } for item in items]), 200

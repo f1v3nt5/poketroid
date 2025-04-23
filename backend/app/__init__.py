@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -10,15 +10,6 @@ migrate = Migrate()
 
 def create_app(config_class=Config):
     app = Flask(__name__)
-    CORS(app, resources={
-        r"/api/*": {
-            "origins": "http://localhost:3000",
-            "allow_headers": ["Authorization", "Content-Type"],
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "supports_credentials": True,
-            "expose_headers": ["X-Total-Count"]
-        }
-    })
     app.config.from_object(config_class)
 
     db.init_app(app)
@@ -31,5 +22,27 @@ def create_app(config_class=Config):
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(media_bp, url_prefix='/api/media')
     app.register_blueprint(friends_bp, url_prefix='/api/friends')
+
+    app.url_map.strict_slashes = False
+
+    CORS(app, resources={
+        r"/api/*": {
+            "origins": "http://localhost:3000",
+            "allow_headers": ["Authorization", "Content-Type", "Cache-Control", "X-No-Cache"],
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "supports_credentials": True,
+            "expose_headers": ["*"]
+        }
+    })
+
+    @app.before_request
+    def before_request():
+        headers = {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Cache-Control, X-No-Cache'
+        }
+        if request.method == 'OPTIONS' or request.method == 'options':
+            return jsonify(headers), 200
 
     return app
