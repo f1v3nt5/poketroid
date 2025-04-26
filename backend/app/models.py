@@ -33,6 +33,7 @@ class Media(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(256), nullable=False)
     type = db.Column(db.Enum('book', 'movie', 'anime', name='media_type'), nullable=False)
+    author = db.Column(db.String(256), nullable=True)
     release_year = db.Column(db.Integer)
     description = db.Column(db.Text)
     cover_url = db.Column(db.String(512))

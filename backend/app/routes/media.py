@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify, g
 from flask_cors import cross_origin
+from sqlalchemy import or_
 from app.models import Media, UserMediaList, db
 from datetime import datetime
 from .auth import auth_required, auth_optional
@@ -26,7 +27,7 @@ def get_media():
         if media_type and media_type in ['movie', 'anime', 'book']:
             query = query.filter(Media.type == media_type)
         if search_query:
-            query = query.filter(Media.title.ilike(f'%{search_query}%'))
+            query = query.filter(or_(Media.title.ilike(f'%{search_query}%'), Media.author.ilike(f'%{search_query}%')))
 
         # Сортировка
         if sort_by == 'popularity':
@@ -59,6 +60,7 @@ def get_media():
             'id': media.id,
             'title': media.title,
             'type': media.type,
+            'author': media.author,
             'cover_url': media.cover_url,
             'rating': media.external_rating,
             'year': media.release_year,
