@@ -1,6 +1,23 @@
-/* Основные стили */
+/* ==================== */
+/* CSS Variables */
+/* ==================== */
+:root {
+  --primary-color: #2c3e50;
+  --primary-hover: #34495e;
+  --accent-purple: #9c27b0;
+  --accent-green: #4caf50;
+  --accent-gold: #ffd700;
+  --border-radius: 8px;
+  --transition: all 0.3s ease;
+  --shadow-sm: 0 2px 5px rgba(0,0,0,0.1);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* ==================== */
+/* Base Styles */
+/* ==================== */
 .catalog-page {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', system-ui, sans-serif;
   background-color: #f5f5f5;
   min-height: 100vh;
 }
@@ -8,363 +25,243 @@
 .catalog-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 2rem;
 }
 
-/* Поисковая строка */
+/* ===== Поисковая строка ===== */
 .search-bar {
-  margin: 20px 0;
+  position: relative;
+  max-width: 600px;
+  margin: 2rem auto;
 }
 
 .search-bar input {
   width: 100%;
-  padding: 12px;
+  padding: 1rem 3rem 1rem 1.5rem;
   border: 1px solid #ddd;
-  border-radius: 25px;
-  font-size: 16px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border-radius: 2rem;
+  font-size: 1rem;
+  transition: var(--transition);
 }
 
-/* Вкладки */
+.search-bar input:focus {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-md);
+  outline: none;
+}
+
+/* ==================== */
+/* Tabs Navigation */
+/* ==================== */
 .tabs {
   display: flex;
-  margin-bottom: 20px;
+  gap: 1rem;
+  margin-bottom: 2rem;
   border-bottom: 1px solid #ddd;
 }
 
 .tabs button {
-  padding: 10px 20px;
+  padding: 0.75rem 1.5rem;
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 16px;
   color: #666;
-  transition: all 0.3s;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: var(--transition);
 }
 
 .tabs button.active {
-  color: #2c3e50;
-  border-bottom: 3px solid #2c3e50;
-  font-weight: bold;
+  color: var(--primary-color);
+  box-shadow: inset 0 -3px 0 var(--primary-color);
 }
 
-/* Сетка медиа */
+/* ==================== */
+/* Media Grid */
+/* ==================== */
 .media-grid {
   display: grid;
+  gap: 1.5rem;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 25px;
-  padding: 10px 0;
+  padding: 1rem 0;
 }
 
+@media (max-width: 768px) {
+  .media-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+}
+
+/* ==================== */
+/* Media Card Component */
+/* ==================== */
 .media-card {
+  position: relative;
   background: white;
-  border-radius: 8px;
+  border-radius: var(--border-radius);
   overflow: hidden;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-  transition: transform 0.3s;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  min-height: 550px;
+  padding: 0.6rem;
 }
 
 .media-card:hover {
   transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
 }
 
 .media-card img {
   width: 100%;
-  height: 350px;
+  aspect-ratio: 2/3;
   object-fit: cover;
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
 
 .media-info {
-  padding: 15px;
+  padding: 1rem;
 }
 
 .media-info h3 {
-  margin: 0 0 10px;
-  font-size: 18px;
-  color: #333;
+  margin: 0 0 0.3rem;
+  font-size: 1.1rem;
+  line-height: 1.3;
+  color: var(--primary-color);
 }
 
 .rating {
   display: flex;
   justify-content: space-between;
   color: #666;
-  margin-bottom: 15px;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
 }
 
-.actions {
+.author {
   display: flex;
-  gap: 10px;
-}
-
-.actions button {
-  flex: 1;
-  padding: 8px;
-  border: none;
-  border-radius: 4px;
-  background: #2c3e50;
-  color: white;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.actions button:hover {
-  background: #34495e;
-}
-
-/* Состояния */
-.loading, .no-results {
-  text-align: center;
-  padding: 50px;
-  font-size: 18px;
+  justify-content: space-between;
   color: #666;
+  font-size: 1rem;
+  margin-bottom: 0.3rem;
 }
 
-.search-bar {
-  position: relative;
-  margin: 20px 0;
-  width: 100%;
-  max-width: 600px;
-}
-
-.search-bar input {
-  width: 100%;
-  padding: 12px 40px 12px 20px;
-  border: 1px solid #ddd;
-  border-radius: 25px;
-  font-size: 16px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  transition: all 0.3s;
-}
-
-.search-bar input:focus {
-  outline: none;
-  border-color: #2c3e50;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-}
-
-.clear-search {
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  color: #999;
-  padding: 0 5px;
-}
-
-.clear-search:hover {
-  color: #333;
-}
-
-
-/* Иконка избранного */
+/* ==================== */
+/* Status Controls */
+/* ==================== */
 .favorite-icon {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 0.5rem;
+  right: 0.5rem;
   cursor: pointer;
   z-index: 2;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 100%;
+  transition: var(--transition);
 }
 
 .favorite-icon svg {
-  font-size: 1.5rem;
-  color: #666;
-  transition: all 0.3s ease;
-}
-
-.favorite-icon .active {
-  color: #ffd700;
-  fill: currentColor;
-}
-
-/* Панель статусов */
-.status-bar {
-  position: absolute;
-  bottom: 10px;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  padding: 0 10px;
-}
-
-.status-bar > div {
-  cursor: pointer;
-  padding: 5px;
-}
-
-.status-bar svg {
-  font-size: 1.2rem;
-}
-
-/* Цвета состояний */
-.planned.active {
-  color: #9c27b0;
-}
-
-.completed.active {
-  color: #4caf50;
-}
-
-/* Анимации */
-.media-card {
-  position: relative;
-  transition: transform 0.3s;
-}
-
-.media-card:hover {
-  transform: translateY(-5px);
-}
-
-.media-card img {
-  width: 100%;
-  height: 300px;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-/* Добавьте в файл Catalog.css */
-
-.status-bar {
-  position: absolute;
-  bottom: 10px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: space-between;
-  padding: 0 10px;
-  box-sizing: border-box;
-}
-
-.planned, .completed {
-  position: relative;
-  z-index: 2;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 5px;
-  border-radius: 50%;
   width: 30px;
   height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: white;
+  filter:
+    drop-shadow(0 0 1px black)
+    drop-shadow(0 0 1px black);
 }
 
-.media-card {
-  position: relative;
-  overflow: hidden;
-}
-
-.planned:active,
-.completed:active,
-.favorite-icon:active {
-  transform: scale(0.9);
-  transition: transform 0.1s;
-}
-
-.planned:hover svg,
-.completed:hover svg,
-.favorite-icon:hover svg {
-  opacity: 0.8;
-}
-
-/* Добавим индикаторы загрузки */
-.media-card.loading::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.8);
-  z-index: 2;
-}
-
-/* Анимация статусов */
-.status-bar svg {
-  transition: all 0.3s ease;
-}
-
-.active.planned svg {
-  color: #9c27b0;
-  filter: drop-shadow(0 0 2px rgba(156, 39, 176, 0.5));
-}
-
-.active.completed svg {
-  color: #4caf50;
-  filter: drop-shadow(0 0 2px rgba(76, 175, 80, 0.5));
-}
-
-.active.favorite svg {
-  color: #ffd700;
-  filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5));
-}
-
-.media-card {
-  position: relative;
-  border-radius: 8px;
-  overflow: hidden;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  transition: transform 0.3s ease;
-}
-
-.media-card:hover {
-  transform: translateY(-5px);
-}
-
-.favorite-icon {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 2;
-  cursor: pointer;
-  padding: 8px;
-  background: rgba(255,255,255,0.9);
-  border-radius: 50%;
+.favorite-icon:hover {
+  transform: scale(1.2);
 }
 
 .status-bar {
   position: absolute;
-  bottom: 10px;
+  bottom: 0.5rem;
   left: 0;
   right: 0;
   display: flex;
   justify-content: space-between;
-  padding: 0 10px;
+  padding: 0 1rem;
 }
 
-.planned, .completed {
-  background: rgba(255,255,255,0.9);
+.planned svg, .completed svg {
   padding: 8px;
-  border-radius: 50%;
+  border-radius: 100%;
   cursor: pointer;
+  transition: var(--transition);
+  width: 28px;
+  height: 28px;
+}
+
+.planned svg:hover, .completed svg:hover {
+  transform: scale(1.2);
 }
 
 .active.favorite {
-  color: #ffd700;
-  fill: currentColor;
+  color: var(--accent-gold);
+  filter: drop-shadow(0 0 2px rgba(255,215,0,0.7));
 }
 
 .active.planned {
-  color: #9c27b0;
+  color: var(--accent-purple);
+  filter: drop-shadow(0 0 2px rgba(156,39,176,0.7));
 }
 
 .active.completed {
-  color: #4caf50;
+  color: var(--accent-green);
+  filter: drop-shadow(0 0 2px rgba(76,175,80,0.7));
 }
 
+/* ==================== */
+/* Loading States */
+/* ==================== */
 .processing-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: grid;
+  place-items: center;
+  font-size: 0.9rem;
+  color: #666;
+  backdrop-filter: blur(2px);
+}
+
+/* ==================== */
+/* Empty States */
+/* ==================== */
+.no-results {
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.1rem;
+  color: #666;
+}
+
+/* Стили для индикатора загрузки */
+.loading-overlay {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255,255,255,0.8);
+  background: rgba(255, 255, 255, 0.9);
   display: flex;
-  align-items: center;
   justify-content: center;
-  font-size: 14px;
-  color: #666;
+  align-items: center;
+  z-index: 100;
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.media-content {
+  transition: opacity 0.2s ease;
+}
+
+.loading .media-content {
+  opacity: 0.5;
+  pointer-events: none;
 }

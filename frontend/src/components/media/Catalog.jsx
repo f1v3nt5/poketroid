@@ -1,11 +1,7 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faStar,
-  faClock,
-  faCheckCircle
-} from '@fortawesome/free-regular-svg-icons';
+import { faStar, faClock, faCheckCircle, faHourglassHalf } from '@fortawesome/free-regular-svg-icons';
 import Navbar from '../Navbar';
 import '../../styles/Catalog.css';
 
@@ -14,8 +10,8 @@ const Catalog = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedTab, setSelectedTab] = useState('movies');
   const [searchQuery, setSearchQuery] = useState('');
+  const abortControllerRef = useRef(null);
 
-  const prevData = useRef([]);
   const cancelTokenRef = useRef(null);
   const searchTimeoutRef = useRef(null);
 
@@ -25,7 +21,26 @@ const Catalog = () => {
     books: 'book'
   }[tab]), []);
 
+  const getContentLoc = useCallback((tab) => ({
+    movies: 'фильмах',
+    anime: 'аниме',
+    books: 'книгах'
+  }[tab]), []);
+
+   const handleTabChange = (tab) => {
+    setSelectedTab(tab);
+    setMedia([]);
+    setIsLoading(true);
+  };
+
   const loadMediaData = useCallback(async (query) => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     try {
       setIsLoading(true);
       const token = localStorage.getItem('token');
@@ -45,11 +60,11 @@ const Catalog = () => {
       const response = await axios.get('http://localhost:5000/api/media', {
         params,
         headers,
-        cancelToken: new axios.CancelToken(c => cancelTokenRef.current = c)
+        cancelToken: new axios.CancelToken(c => cancelTokenRef.current = c),
+        signal: abortController.signal
       });
 
-      prevData.current = response.data.items || [];
-      setMedia(prevData.current);
+      setMedia(response.data.items || []);
     } catch (error) {
       if (!axios.isCancel(error)) {
         console.error('Ошибка загрузки:', error);
@@ -147,6 +162,8 @@ const Catalog = () => {
       favorite: item.is_favorite
     });
 
+    const user = JSON.parse(localStorage.getItem('user'));
+
     useEffect(() => {
       setLocalStatus({
         planned: item.is_planned,
@@ -176,12 +193,20 @@ const Catalog = () => {
 
     return (
       <div className="media-card">
-        <div className="favorite-icon" onClick={(e) => handleToggle('favorite', e)}>
-          <FontAwesomeIcon
-            icon={faStar}
-            className={localStatus.favorite ? 'active favorite' : ''}
-          />
-        </div>
+
+        {user ? (
+          <>
+            <div className="favorite-icon" onClick={(e) => handleToggle('favorite', e)}>
+              <FontAwesomeIcon
+                icon={faStar}
+                className={localStatus.favorite ? 'active favorite' : ''}
+              />
+            </div>
+          </>
+        ) : (
+          <>
+          </>
+        )}
 
         <img
           src={item.cover_url || '/placeholder.jpg'}
@@ -191,6 +216,9 @@ const Catalog = () => {
 
         <div className="media-info">
           <h3>{item.title}</h3>
+          <div className='author'>
+            <span> {item.author || ''}</span>
+          </div>
           <div className="rating">
             <span>★ {item.rating?.toFixed(1) || 'N/A'}</span>
             <span>{item.year}</span>
@@ -198,27 +226,32 @@ const Catalog = () => {
         </div>
 
         <div className="status-bar">
-          <div className="planned" onClick={(e) => handleToggle('planned', e)}>
-            <FontAwesomeIcon
-              icon={faClock}
-              className={localStatus.planned ? 'active planned' : ''}
-            />
-          </div>
 
-          <div className="completed" onClick={(e) => handleToggle('completed', e)}>
-            <FontAwesomeIcon
-              icon={faCheckCircle}
-              className={localStatus.completed ? 'active completed' : ''}
-            />
-          </div>
+          {user ? (
+            <>
+              <div className="planned" onClick={(e) => handleToggle('planned', e)}>
+                <FontAwesomeIcon
+                  icon={faClock}
+                  className={localStatus.planned ? 'active planned' : ''}
+                />
+              </div>
+              <div className="completed" onClick={(e) => handleToggle('completed', e)}>
+                <FontAwesomeIcon
+                  icon={faCheckCircle}
+                  className={localStatus.completed ? 'active completed' : ''}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+            </>
+          )}
         </div>
       </div>
     );
   };
 
-  const mediaToShow = useMemo(() =>
-    isLoading ? prevData.current : media,
-  [isLoading, media]);
+  const mediaToShow = media;
 
   return (
     <div className="catalog-page">
@@ -228,11 +261,10 @@ const Catalog = () => {
         <div className="search-bar">
           <input
             type="text"
-            placeholder={`Поиск в ${selectedTab}...`}
+            placeholder={`Поиск в ${getContentLoc(selectedTab)}...`}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          {isLoading && <div className="search-spinner"></div>}
         </div>
 
         <div className="tabs">
@@ -240,7 +272,8 @@ const Catalog = () => {
             <button
               key={tab}
               className={selectedTab === tab ? 'active' : ''}
-              onClick={() => setSelectedTab(tab)}
+              onClick={() => handleTabChange(tab)}
+              disabled={selectedTab === tab}
             >
               {{
                 movies: 'Фильмы',
@@ -252,13 +285,24 @@ const Catalog = () => {
         </div>
 
         <div className="media-grid">
-          {mediaToShow.map(item => (
-            <MediaCard
-              key={item.id}
-              item={item}
-              onListChange={handleListChange}
-            />
-          ))}
+          {isLoading ? (
+            <div className="loading-overlay">
+              <FontAwesomeIcon
+                icon={faHourglassHalf}
+                spin
+                className="loading-spinner"
+                size="2x"
+              />
+            </div>
+          ) : (
+            mediaToShow.map(item => (
+              <MediaCard
+                key={item.id}
+                item={item}
+                onListChange={handleListChange}
+              />
+            ))
+          )}
         </div>
 
         {mediaToShow.length === 0 && !isLoading && (
