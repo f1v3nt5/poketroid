@@ -51,6 +51,18 @@ const Register = () => {
   };
 
   return (
+    <div className="register-page">
+    <div className="back-to-main">
+      <button
+        onClick={() => {
+          localStorage.clear();
+          window.location.href = '/';
+        }}
+      >
+        На главную
+      </button>
+    </div>
+
     <div className="auth-container">
       <h2>Регистрация</h2>
       {errors.general && <div className="error-message">{errors.general}</div>}
@@ -95,6 +107,7 @@ const Register = () => {
       <div className="auth-link">
         Уже есть аккаунт? <Link to="/login">Войти</Link>
       </div>
+    </div>
     </div>
   );
 };
