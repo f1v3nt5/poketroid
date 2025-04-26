@@ -13,21 +13,20 @@ const Navbar = () => {
         <div className="nav-links">
           {user ? (
             <>
-              <span className="welcome">Hi, {user.username}</span>
-              <Link to="/profile">Profile</Link>
+              <Link to="/profile">Профиль</Link>
               <button
                 onClick={() => {
                   localStorage.clear();
-                  window.location.href = '/login';
+                  window.location.href = '/';
                 }}
               >
-                Logout
+                Выйти
               </button>
             </>
           ) : (
             <>
-              <Link to="/login">Login</Link>
-              <Link to="/register">Register</Link>
+              <Link to="/login">Вход</Link>
+              <Link to="/register">Регистрация</Link>
             </>
           )}
         </div>
