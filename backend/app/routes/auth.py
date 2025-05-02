@@ -85,9 +85,9 @@ def auth_optional(f):
 
         if token and token.startswith('Bearer '):
             try:
-                token_str = token.split()[1]
+                token = token.split()[1]
                 payload = jwt.decode(
-                    token_str,
+                    token,
                     current_app.config['SECRET_KEY'],
                     algorithms=['HS256']
                 )

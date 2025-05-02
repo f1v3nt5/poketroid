@@ -1,6 +1,7 @@
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, request, jsonify, g, current_app
 from flask_cors import cross_origin
 from sqlalchemy import or_
+from sqlalchemy.orm import aliased
 from app.models import Media, UserMediaList, db
 from datetime import datetime
 from .auth import auth_required, auth_optional
@@ -164,3 +165,85 @@ def handle_media_list():
         print(e)
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+
+@media_bp.route('/favorites', methods=['GET'])
+@auth_optional
+def get_favorites():
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Missing user_id parameter'}), 400
+
+    try:
+        # Явное соединение таблиц через SQLAlchemy Core
+        favorites = db.session.query(
+            UserMediaList,
+            Media
+        ).join(
+            Media,
+            UserMediaList.media_id == Media.id
+        ).filter(
+            UserMediaList.user_id == user_id,
+            UserMediaList.list_type == 'favorite'
+        ).order_by(
+            UserMediaList.added_at.desc()
+        ).all()
+
+        # Формируем результат из объединенных данных
+        result = []
+        for user_media_entry, media_entry in favorites:
+            result.append({
+                "media": {
+                    "id": media_entry.id,
+                    "title": media_entry.title,
+                    "type": media_entry.type,
+                    "cover_url": media_entry.cover_url
+                },
+                "added_at": user_media_entry.added_at.isoformat()
+            })
+
+        return jsonify({"items": result}), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Error fetching favorites: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
+
+@media_bp.route('/<int:media_id>', methods=['GET'])
+def get_media_details(media_id):
+    media = Media.query.get_or_404(media_id)
+    return jsonify({
+        'id': media.id,
+        'title': media.title,
+        'type': media.type,
+        'author': media.author,
+        'release_year': media.release_year,
+        'description': media.description,
+        'cover_url': media.cover_url,
+        'external_rating': media.external_rating,
+        'external_rating_count': media.external_rating_count,
+        'genres': [genre.name for genre in media.genres]
+    })
+
+
+@media_bp.route('/<int:media_id>/status', methods=['GET'])
+@auth_optional
+def get_media_status(media_id):
+    if not g.user_id:
+        return jsonify({}), 200
+
+    status = {
+        'planned': False,
+        'completed': False,
+        'favorite': False
+    }
+
+    for list_type in status.keys():
+        exists = UserMediaList.query.filter_by(
+            user_id=g.user_id,
+            media_id=media_id,
+            list_type=list_type
+        ).first()
+        status[list_type] = exists is not None
+
+    return jsonify(status)

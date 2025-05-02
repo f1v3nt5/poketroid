@@ -3,12 +3,14 @@ import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar, faClock, faCheckCircle, faHourglassHalf } from '@fortawesome/free-regular-svg-icons';
 import Navbar from '../Navbar';
+import MediaModal from '../MediaModal';
 import '../../styles/Catalog.css';
 
 const Catalog = () => {
   const [media, setMedia] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedTab, setSelectedTab] = useState('movies');
+  const [selectedMedia, setSelectedMedia] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const abortControllerRef = useRef(null);
 
@@ -192,7 +194,7 @@ const Catalog = () => {
     };
 
     return (
-      <div className="media-card">
+      <div className="media-card" onClick={() => setSelectedMedia(item.id)}>
 
         {user ? (
           <>
@@ -256,6 +258,17 @@ const Catalog = () => {
   return (
     <div className="catalog-page">
       <Navbar />
+
+      {selectedMedia && (
+        <MediaModal
+          mediaId={selectedMedia}
+          onClose={() => {
+            setSelectedMedia(null);
+            loadMediaData(searchQuery);
+          }
+          }
+        />
+      )}
 
       <div className="catalog-container">
         <div className="search-bar">

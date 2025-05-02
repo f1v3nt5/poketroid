@@ -13,7 +13,7 @@ const Navbar = () => {
         <div className="nav-links">
           {user ? (
             <>
-              <Link to="/profile">Профиль</Link>
+              <Link to={`/${user.username}`}>Профиль</Link>
               <button
                 onClick={() => {
                   localStorage.clear();

@@ -6,11 +6,20 @@ import re
 
 class User(db.Model):
     __tablename__ = 'users'
+    __table_args__ = (
+        db.Index('ix_users_username', 'username', unique=True),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
+    display_name = db.Column(db.String(50))
+    avatar_filename = db.Column(db.String(256))
+    gender = db.Column(db.String(20))
+    age = db.Column(db.Integer)
+    about = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_modified = db.Column(db.DateTime, onupdate=datetime.utcnow)
 
     # Relationships
     lists = db.relationship('UserMediaList', backref='user', lazy='dynamic')

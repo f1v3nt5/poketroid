@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -18,10 +18,12 @@ def create_app(config_class=Config):
     from app.routes.auth import auth_bp
     from app.routes.media import media_bp
     from app.routes.friends import friends_bp
+    from app.routes.users import users_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(media_bp, url_prefix='/api/media')
     app.register_blueprint(friends_bp, url_prefix='/api/friends')
+    app.register_blueprint(users_bp, url_prefix='/api/users')
 
     app.url_map.strict_slashes = False
 
@@ -44,5 +46,9 @@ def create_app(config_class=Config):
         }
         if request.method == 'OPTIONS' or request.method == 'options':
             return jsonify(headers), 200
+
+    @app.route('/uploads/<filename>')
+    def uploaded_file(filename):
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
     return app

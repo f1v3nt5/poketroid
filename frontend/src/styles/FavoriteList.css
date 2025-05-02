@@ -1,0 +1,117 @@
+.favorites-section {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  margin-top: 1.5rem;
+  width: 100%;
+  max-width: 250px;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  color: #2c3e50;
+  margin: 0 0 1.5rem;
+}
+
+.favorites-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.favorite-item {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transition: all 0.2s ease;
+  padding: 1rem;
+  border-left: 4px solid;
+}
+
+.favorite-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.favorite-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.favorite-title {
+  font-size: 0.95rem;
+  color: #333;
+  font-weight: 500;
+  flex: 1;
+  margin-right: 1rem;
+}
+
+.favorite-type {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+}
+
+.favorite-item[style*="movie"] { border-color: #2196F3; }
+.favorite-item[style*="movie"] .favorite-type {
+  background: #e3f2fd;
+  color: #2196F3;
+}
+
+.favorite-item[style*="book"] { border-color: #4CAF50; }
+.favorite-item[style*="book"] .favorite-type {
+  background: #e8f5e9;
+  color: #4CAF50;
+}
+
+.favorite-item[style*="anime"] { border-color: #9C27B0; }
+.favorite-item[style*="anime"] .favorite-type {
+  background: #f3e5f5;
+  color: #9C27B0;
+}
+
+/* Скелетоны */
+.loading-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.favorite-item-skeleton {
+  height: 50px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  animation: pulse 1.5s infinite;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 1rem 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.view-all {
+  display: block;
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: #2c3e50;
+  text-decoration: none;
+  text-align: center;
+  transition: color 0.2s;
+}
+
+.view-all:hover {
+  color: #34495e;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
