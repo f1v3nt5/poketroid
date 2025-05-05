@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, g, current_app
 from flask_cors import cross_origin
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
-from app.models import Media, UserMediaList, db
+from app.models import Media, UserMediaList, db, User
 from datetime import datetime
 from .auth import auth_required, auth_optional
 
@@ -172,10 +172,13 @@ def handle_media_list():
 def get_favorites():
     user_id = request.args.get('user_id')
     if not user_id:
-        return jsonify({'error': 'Missing user_id parameter'}), 400
+        username = request.args.get('username')
+        if not username:
+            return jsonify({'error': 'Missing user parameters'}), 400
+        user = User.query.filter_by(username=username).first()
+        user_id = user.id
 
     try:
-        # Явное соединение таблиц через SQLAlchemy Core
         favorites = db.session.query(
             UserMediaList,
             Media
@@ -189,7 +192,20 @@ def get_favorites():
             UserMediaList.added_at.desc()
         ).all()
 
-        # Формируем результат из объединенных данных
+        user_statuses = {}
+        if g.get('user_id'):
+            user_media_entries = UserMediaList.query.filter_by(user_id=g.user_id).all()
+
+            for entry in user_media_entries:
+                media_id = entry.media_id
+                if media_id not in user_statuses:
+                    user_statuses[media_id] = {
+                        'planned': False,
+                        'completed': False,
+                        'favorite': False
+                    }
+                user_statuses[media_id][entry.list_type] = True
+
         result = []
         for user_media_entry, media_entry in favorites:
             result.append({
@@ -197,7 +213,12 @@ def get_favorites():
                     "id": media_entry.id,
                     "title": media_entry.title,
                     "type": media_entry.type,
-                    "cover_url": media_entry.cover_url
+                    "cover_url": media_entry.cover_url,
+                    'rating': media_entry.external_rating,
+                    'year': media_entry.release_year,
+                    'is_planned': user_statuses.get(media_entry.id, {}).get('planned', False),
+                    'is_completed': user_statuses.get(media_entry.id, {}).get('completed', False),
+                    'is_favorite': user_statuses.get(media_entry.id, {}).get('favorite', False)
                 },
                 "added_at": user_media_entry.added_at.isoformat()
             })

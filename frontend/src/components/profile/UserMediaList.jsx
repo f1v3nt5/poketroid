@@ -1,41 +1,37 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import axios from 'axios';
+import { useParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar, faClock, faCheckCircle, faHourglassHalf } from '@fortawesome/free-regular-svg-icons';
+import axios from 'axios';
 import Navbar from '../Navbar';
 import MediaModal from '../MediaModal';
-import '../../styles/Catalog.css';
+import '../../styles/UserMediaList.css';
 
-const Catalog = () => {
+const UserMediaList = () => {
+  const { username, mediaType } = useParams();
   const [media, setMedia] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedTab, setSelectedTab] = useState('movies');
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedTab, setSelectedTab] = useState('planned');
   const [selectedMedia, setSelectedMedia] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const abortControllerRef = useRef(null);
-
   const cancelTokenRef = useRef(null);
-  const searchTimeoutRef = useRef(null);
 
-  const getContentType = useCallback((tab) => ({
-    movies: 'movie',
-    anime: 'anime',
-    books: 'book'
-  }[tab]), []);
+  const getTitle = () => {
+    const types = {
+      movie: 'Фильмы',
+      anime: 'Аниме',
+      book: 'Книги'
+    };
+    return types[mediaType];
+  };
 
-  const getContentLoc = useCallback((tab) => ({
-    movies: 'фильмах',
-    anime: 'аниме',
-    books: 'книгах'
-  }[tab]), []);
-
-   const handleTabChange = (tab) => {
+  const handleTabChange = (tab) => {
     setSelectedTab(tab);
     setMedia([]);
     setIsLoading(true);
   };
 
-  const loadMediaData = useCallback(async (query) => {
+  const fetchMedia = useCallback(async () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -47,34 +43,28 @@ const Catalog = () => {
       setIsLoading(true);
       const token = localStorage.getItem('token');
 
-      const params = {
-        type: getContentType(selectedTab),
-        sort_by: 'popularity',
-        query: query.trim() || undefined,
-        _: Date.now()
-      };
-
       const headers = token ? {
         Authorization: `Bearer ${token}`,
         'Cache-Control': 'no-cache'
       } : {};
 
-      const response = await axios.get('http://localhost:5000/api/media', {
-        params,
+      const res = await axios.get(`http://localhost:5000/api/users/${username}`, {
+        params: {
+          media_type: mediaType,
+          list_type: selectedTab
+        },
         headers,
         cancelToken: new axios.CancelToken(c => cancelTokenRef.current = c),
         signal: abortController.signal
       });
 
-      setMedia(response.data.items || []);
-    } catch (error) {
-      if (!axios.isCancel(error)) {
-        console.error('Ошибка загрузки:', error);
-      }
+      setMedia(res.data || []);
+    } catch (err) {
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
-  }, [selectedTab, getContentType]);
+  }, [username, mediaType, selectedTab]);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -96,21 +86,8 @@ const Catalog = () => {
   }, []);
 
   useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    searchTimeoutRef.current = setTimeout(() => {
-      loadMediaData(searchQuery);
-    }, 500);
-
-    return () => {
-      clearTimeout(searchTimeoutRef.current);
-      if (cancelTokenRef.current) {
-        cancelTokenRef.current();
-      }
-    };
-  }, [searchQuery, loadMediaData]);
+    fetchMedia()
+  }, [fetchMedia]);
 
   const handleListChange = useCallback(async (mediaId, listType) => {
     try {
@@ -256,7 +233,8 @@ const Catalog = () => {
   const mediaToShow = media;
 
   return (
-    <div className="catalog-page">
+    <div className="user-media-list-page">
+
       <Navbar />
 
       {selectedMedia && (
@@ -264,41 +242,31 @@ const Catalog = () => {
           mediaId={selectedMedia}
           onClose={() => {
             setSelectedMedia(null);
-            loadMediaData(searchQuery);
+            fetchMedia();
           }
           }
         />
       )}
 
-      <div className="catalog-container">
-        <div className="catalog-header">
-          <h1>Каталог</h1>
-        </div>
+      <div className="user-media-list-container">
 
-        <div className="search-bar">
-          <input
-            type="text"
-            placeholder={`Поиск в ${getContentLoc(selectedTab)}...`}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className="user-media-list-header">
+          <h1>{getTitle()} @{username}</h1>
         </div>
 
         <div className="tabs">
-          {['movies', 'anime', 'books'].map((tab) => (
-            <button
-              key={tab}
-              className={selectedTab === tab ? 'active' : ''}
-              onClick={() => handleTabChange(tab)}
-              disabled={selectedTab === tab}
-            >
-              {{
-                movies: 'Фильмы',
-                anime: 'Аниме',
-                books: 'Книги'
-              }[tab]}
-            </button>
-          ))}
+          <button
+            className={selectedTab === 'planned' ? 'active' : ''}
+            onClick={() => setSelectedTab('planned')}
+          >
+            Запланировано
+          </button>
+          <button
+            className={selectedTab === 'completed' ? 'active' : ''}
+            onClick={() => setSelectedTab('completed')}
+          >
+            Просмотрено
+          </button>
         </div>
 
         <div className="media-grid">
@@ -325,10 +293,10 @@ const Catalog = () => {
         {mediaToShow.length === 0 && !isLoading && (
           <div className="no-results">Ничего не найдено</div>
         )}
+
       </div>
     </div>
   );
 };
 
-
-export default Catalog;
+export default UserMediaList;

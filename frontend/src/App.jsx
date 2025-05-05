@@ -4,6 +4,8 @@ import Register from './components/auth/Register';
 import Login from './components/auth/Login';
 import Catalog from './components/media/Catalog';
 import ProfilePage from './components/profile/ProfilePage';
+import FavoritesPage from './components/profile/FavoritesPage';
+import UserMediaList from './components/profile/UserMediaList';
 
 function App() {
   return (
@@ -13,6 +15,8 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/:username" element={<ProfilePage />} />
+        <Route path="/users/:username/favorites" element={<FavoritesPage />} />
+        <Route path="/users/:username/lists/:mediaType" element={<UserMediaList />} />
       </Routes>
     </Router>
   );

@@ -1,12 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import MediaModal from '../MediaModal';
 import '../../styles/FavoriteList.css';
 
-const FavoriteList = ({ userId }) => {
+const FavoriteList = ({ userId, username }) => {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [selectedMedia, setSelectedMedia] = useState(null);
+
+  const getContentLoc = useCallback((type) => ({
+    movie: 'фильм',
+    anime: 'аниме',
+    book: 'книга'
+  }[type]), []);
 
   const fetchFavorites = async () => {
     try {
@@ -26,9 +33,7 @@ const FavoriteList = ({ userId }) => {
       })).slice(0, 5); // Берем первые 5 элементов
 
       setFavorites(formattedData);
-      setError(null);
     } catch (err) {
-      setError('Не удалось загрузить избранное');
       console.error('Ошибка:', err.response?.data || err.message);
     } finally {
       setLoading(false);
@@ -40,8 +45,23 @@ const FavoriteList = ({ userId }) => {
   }, [userId]);
 
   return (
+
     <section className="favorites-section">
-      <h2 className="section-title">Избранное</h2>
+
+      {selectedMedia && (
+        <MediaModal
+          mediaId={selectedMedia}
+          onClose={() => {
+            setSelectedMedia(null);
+            fetchFavorites();
+          }
+          }
+        />
+      )}
+
+      <h2 className="section-title">
+        <Link to={`/users/${username}/favorites`}>Избранное</Link>
+      </h2>
 
       {loading ? (
         <div className="loading-grid">
@@ -60,19 +80,17 @@ const FavoriteList = ({ userId }) => {
               key={item.id}
               className="favorite-item"
               style={{ borderColor: getBorderColor(item.type) }}
+              onClick={() => setSelectedMedia(item.id)}
             >
               <div className="favorite-content">
                 <span className="favorite-title">{item.title}</span>
-                <span className="favorite-type">{item.type}</span>
+                <span className="favorite-type">{getContentLoc(item.type)}</span>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      <Link to="/favorites" className="view-all">
-        Посмотреть всё →
-      </Link>
     </section>
   );
 };

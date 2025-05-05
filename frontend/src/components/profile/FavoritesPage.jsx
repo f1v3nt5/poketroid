@@ -1,80 +1,54 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar, faClock, faCheckCircle, faHourglassHalf } from '@fortawesome/free-regular-svg-icons';
+import axios from 'axios';
 import Navbar from '../Navbar';
 import MediaModal from '../MediaModal';
-import '../../styles/Catalog.css';
 
-const Catalog = () => {
+const FavoritesPage = () => {
+  const { username } = useParams();
   const [media, setMedia] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedTab, setSelectedTab] = useState('movies');
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedMedia, setSelectedMedia] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const abortControllerRef = useRef(null);
 
   const cancelTokenRef = useRef(null);
-  const searchTimeoutRef = useRef(null);
 
-  const getContentType = useCallback((tab) => ({
-    movies: 'movie',
-    anime: 'anime',
-    books: 'book'
-  }[tab]), []);
+  const fetchFavorites = useCallback(async () => {
 
-  const getContentLoc = useCallback((tab) => ({
-    movies: 'фильмах',
-    anime: 'аниме',
-    books: 'книгах'
-  }[tab]), []);
-
-   const handleTabChange = (tab) => {
-    setSelectedTab(tab);
-    setMedia([]);
-    setIsLoading(true);
-  };
-
-  const loadMediaData = useCallback(async (query) => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
-
-    try {
-      setIsLoading(true);
-      const token = localStorage.getItem('token');
-
-      const params = {
-        type: getContentType(selectedTab),
-        sort_by: 'popularity',
-        query: query.trim() || undefined,
-        _: Date.now()
-      };
-
-      const headers = token ? {
-        Authorization: `Bearer ${token}`,
-        'Cache-Control': 'no-cache'
-      } : {};
-
-      const response = await axios.get('http://localhost:5000/api/media', {
-        params,
-        headers,
-        cancelToken: new axios.CancelToken(c => cancelTokenRef.current = c),
-        signal: abortController.signal
-      });
-
-      setMedia(response.data.items || []);
-    } catch (error) {
-      if (!axios.isCancel(error)) {
-        console.error('Ошибка загрузки:', error);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedTab, getContentType]);
+
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+
+      try {
+        setIsLoading(true);
+
+        const res = await axios.get(`http://localhost:5000/api/media/favorites`, {
+          params: {
+            username: username
+          },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        const transformed = res.data.items.map(favItem => ({
+          ...favItem.media,
+          is_favorite: true,
+          added_at: favItem.added_at
+        }));
+
+        setMedia(transformed);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+  }, [username]);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -94,23 +68,6 @@ const Catalog = () => {
 
     checkAuth();
   }, []);
-
-  useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    searchTimeoutRef.current = setTimeout(() => {
-      loadMediaData(searchQuery);
-    }, 500);
-
-    return () => {
-      clearTimeout(searchTimeoutRef.current);
-      if (cancelTokenRef.current) {
-        cancelTokenRef.current();
-      }
-    };
-  }, [searchQuery, loadMediaData]);
 
   const handleListChange = useCallback(async (mediaId, listType) => {
     try {
@@ -156,6 +113,10 @@ const Catalog = () => {
       ));
     }
   }, []);
+
+  useEffect(() => {
+    fetchFavorites();
+  }, [fetchFavorites]);
 
   const MediaCard = ({ item, onListChange }) => {
     const [localStatus, setLocalStatus] = useState({
@@ -256,7 +217,8 @@ const Catalog = () => {
   const mediaToShow = media;
 
   return (
-    <div className="catalog-page">
+    <div className="favorites-page">
+
       <Navbar />
 
       {selectedMedia && (
@@ -264,41 +226,15 @@ const Catalog = () => {
           mediaId={selectedMedia}
           onClose={() => {
             setSelectedMedia(null);
-            loadMediaData(searchQuery);
+            fetchFavorites();
           }
           }
         />
       )}
 
-      <div className="catalog-container">
-        <div className="catalog-header">
-          <h1>Каталог</h1>
-        </div>
-
-        <div className="search-bar">
-          <input
-            type="text"
-            placeholder={`Поиск в ${getContentLoc(selectedTab)}...`}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        <div className="tabs">
-          {['movies', 'anime', 'books'].map((tab) => (
-            <button
-              key={tab}
-              className={selectedTab === tab ? 'active' : ''}
-              onClick={() => handleTabChange(tab)}
-              disabled={selectedTab === tab}
-            >
-              {{
-                movies: 'Фильмы',
-                anime: 'Аниме',
-                books: 'Книги'
-              }[tab]}
-            </button>
-          ))}
+      <div className="favorites-container">
+        <div className="favorites-header">
+          <h1>Избранное пользователя @{username}</h1>
         </div>
 
         <div className="media-grid">
@@ -325,10 +261,10 @@ const Catalog = () => {
         {mediaToShow.length === 0 && !isLoading && (
           <div className="no-results">Ничего не найдено</div>
         )}
+
       </div>
     </div>
   );
 };
 
-
-export default Catalog;
+export default FavoritesPage;

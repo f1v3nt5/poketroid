@@ -27,6 +27,51 @@ def get_profile(username):
     if not user:
         return jsonify({'error': 'User not found'}), 404
 
+    media_type = request.args.get('media_type')
+    list_type = request.args.get('list_type')
+
+    if media_type and list_type:
+        query = db.session.query(
+            UserMediaList,
+            Media
+        ).join(
+            Media,
+            UserMediaList.media_id == Media.id
+        ).filter(
+            UserMediaList.user_id == user.id,
+            UserMediaList.list_type == list_type,
+            Media.type == media_type
+        ).order_by(
+            UserMediaList.added_at.desc()
+        ).all()
+
+        user_statuses = {}
+        if g.get('user_id'):
+            user_media_entries = UserMediaList.query.filter_by(user_id=g.user_id).all()
+
+            for entry in user_media_entries:
+                media_id = entry.media_id
+                if media_id not in user_statuses:
+                    user_statuses[media_id] = {
+                        'planned': False,
+                        'completed': False,
+                        'favorite': False
+                    }
+                user_statuses[media_id][entry.list_type] = True
+
+        media = [{
+            "id": media.id,
+            "title": media.title,
+            "type": media.type,
+            "cover_url": media.cover_url,
+            'rating': media.external_rating,
+            'year': media.release_year,
+            'is_planned': user_statuses.get(media.id, {}).get('planned', False),
+            'is_completed': user_statuses.get(media.id, {}).get('completed', False),
+            'is_favorite': user_statuses.get(media.id, {}).get('favorite', False)
+        } for user_media, media in query]
+        return jsonify(media)
+
     # Получаем статистику через отдельные запросы
     stats = {
         'anime': {

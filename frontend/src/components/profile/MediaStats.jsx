@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 import '../../styles/MediaStats.css';
 
 const MediaStats = ({ username }) => {
@@ -64,13 +65,19 @@ const MediaStats = ({ username }) => {
         return (
           <div key={type} className="stat-block">
             <div className="stat-header">
-              <span className="stat-title">
-                {{
-                  movies: 'Фильмы',
-                  anime: 'Аниме',
-                  books: 'Книги'
-                }[type]}
-              </span>
+              <Link to={`/users/${username}/lists/${{
+                    movies: 'movie',
+                    anime: 'anime',
+                    books: 'book'
+                  }[type]}`} className="stat-title-link">
+                <span className="stat-title">
+                  {{
+                    movies: 'Фильмы',
+                    anime: 'Аниме',
+                    books: 'Книги'
+                  }[type]}
+                </span>
+              </Link>
               <span className="stat-total">{completed + planned}</span>
             </div>
 

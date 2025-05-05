@@ -86,8 +86,8 @@ const ProfilePage = () => {
         </div>
 
         <div className="profile-lists">
-          <FavoriteList userId={profile.id} />
           <MediaStats username={profile.username} />
+          <FavoriteList userId={profile.id} username={profile.username} />
         </div>
 
       </div>
