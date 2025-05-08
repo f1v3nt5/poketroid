@@ -13,12 +13,25 @@ const Navbar = () => {
         <div className="nav-links">
           {user ? (
             <>
-              <Link to={`/${user.username}`}>Профиль</Link>
+              <Link to={`/${user.username}`} className="profile-link">
+                <div className="profile-preview">
+                  <img
+                    src={user.avatar_url
+                      ? `http://localhost:5000/uploads/${user.avatar_url}`
+                      : '/default-avatar.png'
+                    }
+                    alt="Аватар"
+                    className="nav-avatar"
+                  />
+                  <span className="nav-username">{user.username}</span>
+                </div>
+              </Link>
               <button
                 onClick={() => {
                   localStorage.clear();
                   window.location.href = '/';
                 }}
+                className="logout-btn"
               >
                 Выйти
               </button>

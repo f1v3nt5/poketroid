@@ -52,7 +52,8 @@ def login():
     return jsonify({
         'token': token,
         'user_id': user.id,
-        'username': user.username
+        'username': user.username,
+        'avatar_url': user.avatar_filename
     }), 200
 
 
