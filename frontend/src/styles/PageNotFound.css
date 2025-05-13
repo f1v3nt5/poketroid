@@ -1,0 +1,29 @@
+.error-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100vh;
+  align-items: center;
+}
+
+.error-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1rem;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  width: 30%;
+  height: 20vh;
+  border-radius: 30px;
+}
+
+.error-title {
+  text-align: center;
+  font-size: 2rem;
+
+}
+
+.error-description {
+  text-align: center;
+  font-size: 1.2rem;
+}

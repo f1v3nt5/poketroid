@@ -40,7 +40,6 @@ const UserMediaList = () => {
     abortControllerRef.current = abortController;
 
     try {
-      setIsLoading(true);
       const token = localStorage.getItem('token');
 
       const headers = token ? {

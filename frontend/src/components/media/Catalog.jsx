@@ -8,7 +8,7 @@ import '../../styles/Catalog.css';
 
 const Catalog = () => {
   const [media, setMedia] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState('movies');
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,7 +44,6 @@ const Catalog = () => {
     abortControllerRef.current = abortController;
 
     try {
-      setIsLoading(true);
       const token = localStorage.getItem('token');
 
       const params = {

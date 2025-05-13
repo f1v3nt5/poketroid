@@ -6,6 +6,7 @@ import EditProfileModal from './EditProfileModal';
 import MediaPieChart from './MediaPieChart';
 import FavoriteList from './FavoriteList';
 import MediaStats from './MediaStats';
+import FriendsList from './FriendsList';
 import '../../styles/ProfilePage.css';
 
 const ProfilePage = () => {
@@ -16,29 +17,156 @@ const ProfilePage = () => {
 
   const cancelTokenRef = useRef(null);
 
+  const token = localStorage.getItem('token');
+  const headers = token ? {
+    Authorization: `Bearer ${token}`,
+    'Cache-Control': 'no-cache'
+  } : {};
+
+  const fetchProfile = async () => {
+
+    try {
+      const res = await axios.get(`http://localhost:5000/api/users/${username}`, {
+        headers,
+        cancelToken: new axios.CancelToken(c => cancelTokenRef.current = c)
+      });
+      setProfile(res.data);
+    } catch (err) {
+      console.error('Error loading profile:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = localStorage.getItem('token');
-
-        const headers = token ? {
-          Authorization: `Bearer ${token}`,
-          'Cache-Control': 'no-cache'
-        } : {};
-
-        const res = await axios.get(`http://localhost:5000/api/users/${username}`, {
-          headers,
-          cancelToken: new axios.CancelToken(c => cancelTokenRef.current = c)
-        });
-        setProfile(res.data);
-      } catch (err) {
-        console.error('Error loading profile:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchProfile();
   }, [username]);
+
+  const FriendActions = ({ profile }) => {
+    const [status, setStatus] = useState(profile.status);
+
+    const deleteFriend = async () => {
+      try {
+        await axios.delete(`http://localhost:5000/api/friends/${profile.id}`, {
+          headers
+        });
+      } catch (err) {
+        console.error('Error deleting friend:', err);
+      }
+    };
+
+    const acceptRequest = async () => {
+      try {
+        await axios.post(`http://localhost:5000/api/friends/requests/${profile.id}/accept`,
+        { data: 'data' },
+        {
+          headers
+        });
+      } catch (err) {
+        console.error('Error accepting request:', err);
+      }
+    };
+
+    const rejectRequest = async () => {
+      try {
+        await axios.post(`http://localhost:5000/api/friends/requests/${profile.id}/reject`,
+        { data: 'data' },
+        {
+          headers
+        });
+      } catch (err) {
+        console.error('Error rejecting request:', err);
+      }
+    };
+
+    const sendRequest = async () => {
+      try {
+        await axios.post(`http://localhost:5000/api/friends/${profile.id}/request`,
+        { data: 'data' },
+        {
+          headers
+        });
+      } catch (err) {
+        console.error('Error sending request:', err);
+      }
+    };
+
+    const cancelRequest = async () => {
+      try {
+        await axios.delete(`http://localhost:5000/api/friends/requests/${profile.id}`,
+        {
+          headers
+        });
+      } catch (err) {
+        console.error('Error cancelling request:', err);
+      }
+    }
+
+    return (
+
+      <div>
+        {status === 'none' && !profile.is_current_user && (
+          <button
+            className="add-friend-btn"
+            onClick={() => {
+              sendRequest();
+              setStatus('pending outcoming');
+            }}
+          >
+            Добавить в друзья
+          </button>
+        )}
+
+        {status === 'accepted' && (
+          <button
+            className="del-friend-btn"
+            onClick={() => {
+              deleteFriend();
+              setStatus('none');
+            }}
+          >
+            Удалить из друзей
+          </button>
+        )}
+
+        {status === 'pending incoming' && (
+          <div className='request-buttons'>
+            <button
+              className="accept-request-btn"
+              onClick={() => {
+                acceptRequest();
+                setStatus('accepted');
+              }}
+            >
+              Принять
+            </button>
+            <button
+              className="reject-request-btn"
+              onClick={() => {
+                rejectRequest();
+                setStatus('none');
+              }}
+            >
+              Отклонить
+            </button>
+          </div>
+        )}
+
+        {status === 'pending outcoming' && (
+          <button
+            className="cancel-request-btn"
+            onClick={() => {
+                cancelRequest();
+                setStatus('none');
+              }}
+          >
+            Отменить запрос
+          </button>
+        )}
+      </div>
+    );
+  };
+
 
   if (loading) {
     return <div className="loading">Loading...</div>;
@@ -53,10 +181,14 @@ const ProfilePage = () => {
       <Navbar />
 
       <div className="profile-container">
+
         <div className="profile-header">
           <div className="avatar-section">
             <img
-              src={`http://localhost:5000/uploads/${profile.avatar_url}` || '/default-avatar.png'}
+              src={profile.avatar_url
+                      ? `http://localhost:5000/uploads/${profile.avatar_url}`
+                      : '/default-avatar.png'
+                    }
               alt="Avatar"
               className="profile-avatar"
             />
@@ -68,6 +200,10 @@ const ProfilePage = () => {
                 Редактировать
               </button>
             )}
+
+            <FriendActions profile={profile} />
+
+
           </div>
           <div className="profile-info">
             <h1>{profile.display_name || profile.username}</h1>
@@ -86,6 +222,7 @@ const ProfilePage = () => {
         </div>
 
         <div className="profile-lists">
+          <FriendsList username={profile.username} />
           <MediaStats username={profile.username} />
           <FavoriteList userId={profile.id} username={profile.username} />
         </div>

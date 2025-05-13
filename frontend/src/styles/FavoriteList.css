@@ -31,7 +31,7 @@
 
 .section-title {
   font-size: 1.25rem;
-  color: #2c3e50;
+  color: var(--primary-color);
   margin: 0 0 1.5rem;
 }
 
@@ -42,7 +42,7 @@
 }
 
 .section-title a:hover {
-  color: #2c3e50;
+  color: var(--primary-hover);
   text-decoration: underline;
 }
 

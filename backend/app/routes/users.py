@@ -3,7 +3,7 @@ import time
 from flask import Blueprint, request, jsonify, g, current_app
 from flask_cors import cross_origin
 from werkzeug.utils import secure_filename
-from app.models import User, db, UserMediaList, Media
+from app.models import User, db, UserMediaList, Media, Friendship
 from app.routes.auth import auth_required, auth_optional
 from app.schemas import ProfileUpdateSchema
 from datetime import datetime
@@ -106,6 +106,21 @@ def get_profile(username):
         }
     }
 
+    status = 'none'
+    if g.get('user_id'):
+        current_user = User.query.get(g.user_id)
+        friendship = Friendship.query.filter(
+            ((Friendship.user_id == user.id) & (Friendship.friend_id == current_user.id)
+             |
+             (Friendship.friend_id == user.id) & (Friendship.user_id == current_user.id))
+        ).first()
+        if friendship:
+            if not friendship.status == 'pending':
+                status = friendship.status
+            else:
+                type = 'incoming' if friendship.friend_id == current_user.id else 'outcoming'
+                status = friendship.status + ' ' + type
+
     return jsonify({
         'id': user.id,
         'username': user.username,
@@ -116,7 +131,8 @@ def get_profile(username):
         'about': user.about,
         'registered_at': user.created_at.isoformat(),
         'stats': stats,
-        'is_current_user': g.user_id == user.id
+        'is_current_user': g.user_id == user.id,
+        'status': status
     }), 200
 
 
@@ -185,3 +201,54 @@ def upload_avatar():
     except Exception as e:
         current_app.logger.error(f"Avatar upload failed: {str(e)}")
         return jsonify({'error': 'File upload failed'}), 500
+
+
+@users_bp.route('/<username>/friends', methods=['GET'])
+def get_user_friends(username):
+    user = User.query.filter_by(username=username).first_or_404()
+
+    friends = Friendship.query.filter(
+        ((Friendship.user_id == user.id) | (Friendship.friend_id == user.id)),
+        Friendship.status == 'accepted'
+    ).limit(5).all()
+
+    friends_list = []
+    for f in friends:
+        friend_id = f.friend_id if f.user_id == user.id else f.user_id
+        friend = User.query.get(friend_id)
+        friends_list.append({
+            'id': friend.id,
+            'username': friend.username,
+            'avatar': friend.avatar_filename
+        })
+
+    return jsonify({'friends': friends_list}), 200
+
+
+@users_bp.route('/search', methods=['GET'])
+@auth_required
+def search_users():
+    query = request.args.get('q', '')
+    users = User.query.filter(
+        (User.username.ilike(f'%{query}%') | User.display_name.ilike(f'%{query}%'))
+    ).limit(10).all()
+
+    current_user = User.query.get(g.user_id)
+
+    return jsonify([{
+        'id': u.id,
+        'username': u.username,
+        'avatar': u.avatar_filename,
+        'displayName': u.display_name,
+        'status': Friendship.query.filter(
+            ((Friendship.user_id == u.id) & (Friendship.friend_id == current_user.id)
+             |
+             (Friendship.friend_id == u.id) & (Friendship.user_id == current_user.id))
+        ).first().status
+        if Friendship.query.filter(
+            ((Friendship.user_id == u.id) & (Friendship.friend_id == current_user.id)
+             |
+             (Friendship.friend_id == u.id) & (Friendship.user_id == current_user.id))
+        ).first() else 'none',
+        'isCurrentUser': u.id == current_user.id
+    } for u in users]), 200

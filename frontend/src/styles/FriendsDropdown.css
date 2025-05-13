@@ -1,0 +1,127 @@
+.friends-dropdown {
+  position: absolute;
+  top: 70px;
+  right: 250px;
+  width: 450px;
+  max-height: 40vh;
+  min-height: 40vh;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.dropdown-header {
+  padding: 1.2rem;
+}
+
+.close-btn {
+  background: none;
+  border: 1px solid var(--primary-color) !important;
+  padding: 0.2rem 0.7rem !important;
+  cursor: pointer;
+  color: var(--primary-color) !important;
+}
+
+.close-btn:hover {
+  background: var(--primary-color) !important;
+  color: white !important;
+}
+
+.add-button, .search-button {
+  color: var(--primary-color) !important;
+  border: none !important;
+}
+
+.search-button:hover {
+  background: none !important;
+}
+
+.accept-btn {
+  color: var(--accent-green) !important;
+}
+
+.cancel-btn, .reject-btn {
+  color: var(--accent-red) !important;
+}
+
+.cancel-btn:hover, .reject-btn:hover, .accept-btn:hover {
+  text-decoration: underline;
+}
+
+.tabs-dropdown {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0 !important;
+}
+
+.tab-dropdown {
+  flex: 1;
+  padding: 1rem 1.5rem !important;
+  border-radius: 8px !important;
+  background: #cecdce !important;
+  color: var(--primary-color) !important;
+  font-size: 1rem !important;
+  box-shadow: 0 0px 0px rgba(0,0,0,0.3);
+  border: none !important;
+}
+
+.tab-dropdown:hover {
+  color: white !important;
+  background: #999999 !important;
+  transition: color,background 0.3s ease !important;
+}
+
+.tab-dropdown.active {
+  background: var(--primary-color) !important;
+  color: white !important;
+  box-shadow: 0 5px 5px rgba(0,0,0,0.3);
+}
+
+.friend-name {
+  color: black !important;
+}
+
+.friend-dropdown {
+  overflow: scroll;
+  max-height: 30vh;
+}
+
+.friend-dropdown .friends-section {
+  width: 83%;
+  margin: 1rem auto 1rem;
+}
+
+.content {
+  padding: 20px;
+  height: 30vh;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+/* Анимации */
+.friends-dropdown-enter {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.friends-dropdown-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.3s ease;
+}
+
+.friends-dropdown-exit {
+  opacity: 1;
+}
+
+.friends-dropdown-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.2s ease;
+}

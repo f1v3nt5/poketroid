@@ -106,7 +106,7 @@ const MediaModal = ({ mediaId, onClose }) => {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="media-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="close-btn" onClick={onClose}>×</button>
+        <button className="media-close-btn" onClick={onClose}>×</button>
 
         {loading ? (
           <div className="loading-state">Загрузка...</div>

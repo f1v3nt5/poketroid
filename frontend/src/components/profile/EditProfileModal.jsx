@@ -10,7 +10,9 @@ const EditProfileModal = ({ profile, onClose, onSave }) => {
     about: profile.about || ''
   });
   const [avatarFile, setAvatarFile] = useState(null);
-  const [avatarPreview, setAvatarPreview] = useState(`http://localhost:5000/uploads/${profile.avatar_url}`);
+  const [avatarPreview, setAvatarPreview] = useState(profile.avatar_url
+                      ? `http://localhost:5000/uploads/${profile.avatar_url}`
+                      : '/default-avatar.png');
   const [isUploading, setIsUploading] = useState(false);
 
   if (!profile) {
@@ -121,7 +123,7 @@ const EditProfileModal = ({ profile, onClose, onSave }) => {
               type="button"
               onClick={() => {
                 setAvatarFile(null);
-                setAvatarPreview(profile.avatar_url);
+                setAvatarPreview(`http://localhost:5000/uploads/${profile.avatar_url}`);
               }}
               className="remove-avatar-btn"
             >
