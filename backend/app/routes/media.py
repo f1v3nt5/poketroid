@@ -19,7 +19,7 @@ def get_media():
         sort_by = request.args.get('sort_by', 'popularity')
         search_query = request.args.get('query')
         page = int(request.args.get('page', 1))
-        per_page = 20
+        per_page = 100
 
         # Базовый запрос
         query = Media.query
@@ -242,8 +242,7 @@ def get_media_details(media_id):
         'description': media.description,
         'cover_url': media.cover_url,
         'external_rating': media.external_rating,
-        'external_rating_count': media.external_rating_count,
-        'genres': [genre.name for genre in media.genres]
+        'external_rating_count': media.external_rating_count
     })
 
 

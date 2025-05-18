@@ -214,9 +214,9 @@ const ProfilePage = () => {
           </div>
 
           <MediaPieChart stats={{
-            books: profile.stats.books.completed + profile.stats.books.planned,
-            movies: profile.stats.movies.completed + profile.stats.movies.planned,
-            anime: profile.stats.anime.completed + profile.stats.anime.planned
+            books: parseInt(profile.durations.books.completed / 60),
+            movies: parseInt(profile.durations.movies.completed / 60),
+            anime: parseInt(profile.durations.anime.completed / 60)
           }} />
 
         </div>

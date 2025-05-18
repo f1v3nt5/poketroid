@@ -1,0 +1,18 @@
+{
+    animes(limit: 100, order: popularity) {
+        russian
+        score
+        episodes
+        duration
+        releasedOn {
+            year
+        }
+        poster {
+            originalUrl
+        }
+        studios {
+            name
+        }
+        description
+    }
+}

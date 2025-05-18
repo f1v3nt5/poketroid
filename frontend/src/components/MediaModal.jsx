@@ -66,7 +66,7 @@ const MediaModal = ({ mediaId, onClose }) => {
     };
 
     if (mediaId) fetchData();
-  }, [mediaId]);
+  }, [mediaId, token, user]);
 
   const handleStatusChange = async (listType) => {
     try {
@@ -153,7 +153,11 @@ const MediaModal = ({ mediaId, onClose }) => {
               </div>
 
               <div className="details-section">
-                <p>★ {media.external_rating} ({media.external_rating_count} оценили)</p>
+                {media.external_rating_count ? (
+                  <p>★ {media.external_rating} ({media.external_rating_count} оценили)</p>
+                ) : (
+                  <p>★ {media.external_rating}</p>
+                )}
                 <div className="genres">
                   {media.genres?.map(genre => (
                     <span key={genre} className="genre-tag">{genre}</span>

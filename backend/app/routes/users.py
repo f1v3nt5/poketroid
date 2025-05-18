@@ -1,12 +1,15 @@
 import os
 import time
+
+from datetime import datetime
 from flask import Blueprint, request, jsonify, g, current_app
 from flask_cors import cross_origin
+from sqlalchemy import func
 from werkzeug.utils import secure_filename
+
 from app.models import User, db, UserMediaList, Media, Friendship
 from app.routes.auth import auth_required, auth_optional
 from app.schemas import ProfileUpdateSchema
-from datetime import datetime
 
 users_bp = Blueprint('users', __name__)
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -106,6 +109,36 @@ def get_profile(username):
         }
     }
 
+    durations = {
+        'anime': {
+            'completed': user.lists.join(Media)
+            .filter(
+                UserMediaList.list_type == 'completed',
+                Media.type == 'anime'
+            )
+            .with_entities(func.coalesce(func.sum(Media.duration), 0))
+            .scalar()
+        },
+        'movies': {
+            'completed': user.lists.join(Media)
+            .filter(
+                UserMediaList.list_type == 'completed',
+                Media.type == 'movie'
+            )
+            .with_entities(func.coalesce(func.sum(Media.duration), 0))
+            .scalar()
+        },
+        'books': {
+            'completed': user.lists.join(Media)
+            .filter(
+                UserMediaList.list_type == 'completed',
+                Media.type == 'book'
+            )
+            .with_entities(func.coalesce(func.sum(Media.duration), 0))
+            .scalar()
+        }
+    }
+
     status = 'none'
     if g.get('user_id'):
         current_user = User.query.get(g.user_id)
@@ -130,6 +163,7 @@ def get_profile(username):
         'age': user.age,
         'about': user.about,
         'registered_at': user.created_at.isoformat(),
+        'durations': durations,
         'stats': stats,
         'is_current_user': g.user_id == user.id,
         'status': status

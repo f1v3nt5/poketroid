@@ -9,7 +9,7 @@ const MediaPieChart = ({ stats }) => {
       <div className="pie-chart-container">
         <div className="pie-chart empty">
           <div className="center">
-            <div className="total-count">0</div>
+            <div className="total-count">0 часов</div>
             <div className="total-label">пока пусто</div>
           </div>
         </div>
@@ -33,6 +33,7 @@ const MediaPieChart = ({ stats }) => {
 
   return (
     <div className="pie-chart-container">
+      <h3 style={{color: 'var(--primary-color)'}}>Статистика времени</h3>
       <div className="pie-chart">
         <div
           className="pie"
@@ -45,7 +46,7 @@ const MediaPieChart = ({ stats }) => {
           }}
         >
           <div className="center">
-            <div className="total-count">{total}</div>
+            <div className="total-count">{total} ч.</div>
             <div className="total-label">всего</div>
           </div>
         </div>
@@ -54,15 +55,15 @@ const MediaPieChart = ({ stats }) => {
       <div className="legend">
         <div className="legend-item">
           <span className="color-box books"></span>
-          <span>Книги ({stats.books})</span>
+          <span>Книги ({stats.books} ч.)</span>
         </div>
         <div className="legend-item">
           <span className="color-box movies"></span>
-          <span>Фильмы ({stats.movies})</span>
+          <span>Фильмы ({stats.movies} ч.)</span>
         </div>
         <div className="legend-item">
           <span className="color-box anime"></span>
-          <span>Аниме ({stats.anime})</span>
+          <span>Аниме ({stats.anime} ч.)</span>
         </div>
       </div>
     </div>

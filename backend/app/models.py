@@ -45,25 +45,10 @@ class Media(db.Model):
     author = db.Column(db.String(256), nullable=True)
     release_year = db.Column(db.Integer)
     description = db.Column(db.Text)
+    duration = db.Column(db.Integer)
     cover_url = db.Column(db.String(512))
     external_rating = db.Column(db.Float)
     external_rating_count = db.Column(db.Integer)
-
-    genres = db.relationship('MediaGenre', backref='media', lazy='dynamic')
-
-
-class Genre(db.Model):
-    __tablename__ = 'genres'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64), unique=True, nullable=False)
-
-
-class MediaGenre(db.Model):
-    __tablename__ = 'media_genres'
-
-    media_id = db.Column(db.Integer, db.ForeignKey('media.id'), primary_key=True)
-    genre_id = db.Column(db.Integer, db.ForeignKey('genres.id'), primary_key=True)
 
 
 class UserMediaList(db.Model):
