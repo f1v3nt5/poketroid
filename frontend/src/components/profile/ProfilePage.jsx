@@ -15,6 +15,10 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
 
+  useEffect(() => {
+    document.title = username + ' - Poketroid';
+  }, []);
+
   const cancelTokenRef = useRef(null);
 
   const token = localStorage.getItem('token');
@@ -209,8 +213,25 @@ const ProfilePage = () => {
             <h1>{profile.display_name || profile.username}</h1>
             <p className="username">@{profile.username}</p>
             <p className="reg-date">Дата регистрации: {new Date(profile.registered_at).toLocaleDateString("ru-RU")}</p>
-            <h2 className="about-title">Обо мне</h2>
-            <p className="about">{profile.about}</p>
+
+            { profile.gender &&
+              <p className="gender">Пол: {{
+                  male: 'мужской',
+                  female: 'женский'
+                }[profile.gender]}
+              </p>
+            }
+
+            { profile.age &&
+              <p className="age">Возраст: {profile.age}</p>
+            }
+
+            { profile.about &&
+              <>
+                <h2 className="about-title">Обо мне</h2>
+                <p className="about">{profile.about}</p>
+              </>
+            }
           </div>
 
           <MediaPieChart stats={{

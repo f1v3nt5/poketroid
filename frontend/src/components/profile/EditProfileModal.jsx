@@ -83,7 +83,9 @@ const EditProfileModal = ({ profile, onClose, onSave }) => {
           stats: profile.stats,
           is_current_user: profile.is_current_user,
           username: profile.username,
-          registered_at: profile.registered_at
+          registered_at: profile.registered_at,
+          durations: profile.durations,
+          id: profile.id
         });
         onClose();
       } catch (err) {
@@ -161,7 +163,7 @@ const EditProfileModal = ({ profile, onClose, onSave }) => {
               type="number"
               value={formData.age}
               onChange={(e) => {
-                const value = Math.min(120, Math.max(5, e.target.value || ''));
+                const value = Math.min(120, e.target.value || '');
                 setFormData({...formData, age: value});
               }}
             />

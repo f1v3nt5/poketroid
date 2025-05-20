@@ -1,7 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import '../../styles/PageNotFound.css';
 
 const PageNotFound = () => {
+    useEffect(() => {
+      document.title = 'Page Not Found';
+    }, []);
+
     return (
         <div className="error-page">
             <div className="back-to-main">

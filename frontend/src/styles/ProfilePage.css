@@ -108,6 +108,13 @@
   transition: all 0.2s;
 }
 
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-top: 2rem;
+}
+
 .profile-info h1 {
   margin: 0;
   font-size: 2rem;
@@ -117,10 +124,11 @@
 .username {
   color: #666;
   margin: 0;
+  margin-bottom: 0.3rem;
   font-size: 1.2rem;
 }
 
-.reg-date {
+.reg-date, .gender, .age {
   margin: 0;
 }
 
@@ -132,6 +140,8 @@
 
 .about {
   margin: 0rem 0;
+  max-width: 450px;
+  overflow: hidden;
 }
 
 .profile-lists {

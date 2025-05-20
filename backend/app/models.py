@@ -1,7 +1,9 @@
-from datetime import datetime
-from app import db
 import bcrypt
 import re
+
+from datetime import datetime
+
+from app import db
 
 
 class User(db.Model):
@@ -13,15 +15,14 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
-    display_name = db.Column(db.String(50))
-    avatar_filename = db.Column(db.String(256))
-    gender = db.Column(db.String(20))
-    age = db.Column(db.Integer)
-    about = db.Column(db.Text)
+    display_name = db.Column(db.String(50), nullable=True)
+    avatar_filename = db.Column(db.String(256), nullable=True)
+    gender = db.Column(db.String(20), nullable=True)
+    age = db.Column(db.Integer, nullable=True)
+    about = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_modified = db.Column(db.DateTime, onupdate=datetime.utcnow)
 
-    # Relationships
     lists = db.relationship('UserMediaList', backref='user', lazy='dynamic')
     friends = db.relationship('Friendship', foreign_keys='Friendship.user_id', backref='user', lazy='dynamic')
 

@@ -4,8 +4,8 @@ import Register from './components/auth/Register';
 import Login from './components/auth/Login';
 import Catalog from './components/media/Catalog';
 import ProfilePage from './components/profile/ProfilePage';
-import FavoritesPage from './components/profile/FavoritesPage';
-import UserMediaList from './components/profile/UserMediaList';
+import FavoritesPage from './components/media/FavoritesPage';
+import UserMediaList from './components/media/UserMediaList';
 import PageNotFound from "./components/errors/PageNotFound";
 
 function App() {

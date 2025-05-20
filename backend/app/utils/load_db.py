@@ -2,7 +2,7 @@ import json
 import os
 
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, Column, Integer, String, Float, Enum, Text
+from sqlalchemy import create_engine, Column, Enum, Float, Integer, String, Text
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 
@@ -91,7 +91,6 @@ def import_from_json(json_file):
     session.query(Media).delete()
     print(f"Таблица очищена")
 
-    # Books
     books = fetch_books(data['books'])
     try:
         session.bulk_save_objects(books)

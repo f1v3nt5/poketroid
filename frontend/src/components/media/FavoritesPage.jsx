@@ -1,69 +1,56 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar, faClock, faCheckCircle, faHourglassHalf } from '@fortawesome/free-regular-svg-icons';
 import axios from 'axios';
 import Navbar from '../Navbar';
-import MediaModal from '../MediaModal';
-import '../../styles/UserMediaList.css';
+import MediaModal from '../media/MediaModal';
 
-const UserMediaList = () => {
-  const { username, mediaType } = useParams();
+const FavoritesPage = () => {
+  const { username } = useParams();
   const [media, setMedia] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState('planned');
   const [selectedMedia, setSelectedMedia] = useState(null);
   const abortControllerRef = useRef(null);
-  const cancelTokenRef = useRef(null);
 
-  const getTitle = () => {
-    const types = {
-      movie: 'Фильмы',
-      anime: 'Аниме',
-      book: 'Книги'
-    };
-    return types[mediaType];
-  };
+  useEffect(() => {
+    document.title = 'Избранное @' + username + ' - Poketroid';
+  });
 
-  const handleTabChange = (tab) => {
-    setSelectedTab(tab);
-    setMedia([]);
-    setIsLoading(true);
-  };
+  const fetchFavorites = useCallback(async () => {
 
-  const fetchMedia = useCallback(async () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
 
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
 
-    try {
-      const token = localStorage.getItem('token');
+      try {
+        setIsLoading(true);
 
-      const headers = token ? {
-        Authorization: `Bearer ${token}`,
-        'Cache-Control': 'no-cache'
-      } : {};
+        const res = await axios.get(`http://localhost:5000/api/media/favorites`, {
+          params: {
+            username: username
+          },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
 
-      const res = await axios.get(`http://localhost:5000/api/users/${username}`, {
-        params: {
-          media_type: mediaType,
-          list_type: selectedTab
-        },
-        headers,
-        cancelToken: new axios.CancelToken(c => cancelTokenRef.current = c),
-        signal: abortController.signal
-      });
+        const transformed = res.data.items.map(favItem => ({
+          ...favItem.media,
+          is_favorite: true,
+          added_at: favItem.added_at
+        }));
 
-      setMedia(res.data || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [username, mediaType, selectedTab]);
+        setMedia(transformed);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+  }, [username]);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -83,10 +70,6 @@ const UserMediaList = () => {
 
     checkAuth();
   }, []);
-
-  useEffect(() => {
-    fetchMedia()
-  }, [fetchMedia]);
 
   const handleListChange = useCallback(async (mediaId, listType) => {
     try {
@@ -132,6 +115,10 @@ const UserMediaList = () => {
       ));
     }
   }, []);
+
+  useEffect(() => {
+    fetchFavorites();
+  }, [fetchFavorites]);
 
   const MediaCard = ({ item, onListChange }) => {
     const [localStatus, setLocalStatus] = useState({
@@ -232,7 +219,7 @@ const UserMediaList = () => {
   const mediaToShow = media;
 
   return (
-    <div className="user-media-list-page">
+    <div className="favorites-page">
 
       <Navbar />
 
@@ -241,31 +228,15 @@ const UserMediaList = () => {
           mediaId={selectedMedia}
           onClose={() => {
             setSelectedMedia(null);
-            fetchMedia();
+            fetchFavorites();
           }
           }
         />
       )}
 
-      <div className="user-media-list-container">
-
-        <div className="user-media-list-header">
-          <h1>{getTitle()} @{username}</h1>
-        </div>
-
-        <div className="tabs">
-          <button
-            className={selectedTab === 'planned' ? 'active' : ''}
-            onClick={() => setSelectedTab('planned')}
-          >
-            Запланировано
-          </button>
-          <button
-            className={selectedTab === 'completed' ? 'active' : ''}
-            onClick={() => setSelectedTab('completed')}
-          >
-            Просмотрено
-          </button>
+      <div className="favorites-container">
+        <div className="favorites-header">
+          <h1>Избранное пользователя @{username}</h1>
         </div>
 
         <div className="media-grid">
@@ -298,4 +269,4 @@ const UserMediaList = () => {
   );
 };
 
-export default UserMediaList;
+export default FavoritesPage;

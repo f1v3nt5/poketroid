@@ -3,10 +3,14 @@ import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar, faClock, faCheckCircle, faHourglassHalf } from '@fortawesome/free-regular-svg-icons';
 import Navbar from '../Navbar';
-import MediaModal from '../MediaModal';
+import MediaModal from './MediaModal';
 import '../../styles/Catalog.css';
 
 const Catalog = () => {
+  useEffect(() => {
+    document.title = 'Poketroid';
+  }, []);
+
   const [media, setMedia] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState('movies');

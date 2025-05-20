@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import MediaModal from '../MediaModal';
+import MediaModal from '../media/MediaModal';
 import '../../styles/FavoriteList.css';
 
 const FavoriteList = ({ userId, username }) => {
@@ -24,13 +24,12 @@ const FavoriteList = ({ userId, username }) => {
         }
       });
 
-      // Преобразуем данные API в нужный формат
       const formattedData = response.data.items.map(item => ({
         id: item.media.id,
         title: item.media.title,
         type: item.media.type,
         added_at: item.added_at
-      })).slice(0, 5); // Берем первые 5 элементов
+      })).slice(0, 5);
 
       setFavorites(formattedData);
     } catch (err) {

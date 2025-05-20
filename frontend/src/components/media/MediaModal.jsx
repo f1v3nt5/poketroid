@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import '../styles/MediaModal.css';
+import '../../styles/MediaModal.css';
 
 const MediaModal = ({ mediaId, onClose }) => {
   const [media, setMedia] = useState(null);
@@ -43,11 +43,8 @@ const MediaModal = ({ mediaId, onClose }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-
-        // Запрос данных о медиа
         const mediaResponse = await axios.get(`http://localhost:5000/api/media/${mediaId}`);
 
-        // Запрос статусов пользователя
         let statusResponse = { data: {} };
         if (user) {
           statusResponse = await axios.get(`http://localhost:5000/api/media/${mediaId}/status`, {

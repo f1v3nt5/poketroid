@@ -1,37 +1,24 @@
-import requests
 import json
 import os
-import warnings
+import requests
 
-from time import sleep
-from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
+from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from pprint import pprint
 from fake_useragent import UserAgent
-from gql import gql, Client
+from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
 from pathlib import Path
 
-warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 
 load_dotenv()
 
-# Конфигурация
 MAX_RESULTS = 100
-REQUEST_DELAY = 1  # Задержка между запросами в секундах
 
 
 def parse_livelib_books():
-    """Парсинг книг с LiveLib.ru"""
-    ua = UserAgent()
-    headers = {'User-Agent': ua.random}
+    """Парсинг книг с LiveLib"""
     books = []
-    url = 'https://www.livelib.ru/selection/7761-samye-chitaemye-knigi-na-livelib'
-
     try:
-        # response = requests.get(url, headers=headers)
-        # response.raise_for_status()
-
         with open('livelib_raw.txt', encoding='utf-8') as f:
             page_raw = f.read()
 
@@ -100,65 +87,25 @@ def fetch_kinopoisk_movies(api_key):
     return movies[:MAX_RESULTS]
 
 
-# def fetch_shikimori_anime():
-#     """Получение аниме через Shikimori API"""
-#     anime_list = []
-#     url = "https://shikimori.one/api/animes"
-#
-#     params = {
-#         'order': 'popularity',
-#         'limit': MAX_RESULTS,
-#         'status': 'released'
-#     }
-#
-#     try:
-#         response = requests.get(url, params=params, headers={'User-Agent': 'Mozilla/5.0'})
-#         if response.status_code == 200:
-#             data = response.json()
-#             print(data[0])
-#             for anime in data:
-#
-#                 russian_title = anime.get('russian') or anime.get('name', 'Без названия')
-#
-#                 anime_list.append(
-#                     {
-#                         'title': russian_title,
-#                         'synopsis': anime.get('description', 'Нет описания').replace('<br>', '\n'),
-#                         'year': str(anime.get('aired_on', '')[:4]) if anime.get('aired_on') else '',
-#                         'score': anime.get('score', 0),
-#                         'episodes': anime.get('episodes', 1),
-#
-#                         'image': f"https://shikimori.one{anime.get('image', {}).get('original', '')}"
-#                     }
-#                 )
-#                 sleep(0.5)
-#     except Exception as e:
-#         print(f"Ошибка при запросе к Shikimori: {e}")
-#
-#     return anime_list[:MAX_RESULTS]
-
-def fetch_shikimori_graphql():
+def fetch_shikimori_graphql(api_key):
+    """Получение аниме из Shikimori"""
     anime_list = []
     transport = RequestsHTTPTransport(
         url="https://shikimori.one/api/graphql",
         headers={
             'User-Agent': 'Api Test',
-            'Authorization': 'Bearer SjKhN4BPeRzQ5shxg44b6NBztdw-YExdO-IcnyTE420'
+            'Authorization': f'Bearer {api_key}'
         },
         verify=True,
         retries=3,
     )
-
     client = Client(
         transport=transport,
         fetch_schema_from_transport=True,
     )
-
     query_path = Path("query.gql")
     query = gql(query_path.read_text())
-
     result = client.execute(query)
-
     animes = result['animes']
     for anime in animes:
         anime_list.append(
@@ -173,7 +120,6 @@ def fetch_shikimori_graphql():
                 'studio': anime['studios'][0]['name']
             }
         )
-
     return anime_list[:MAX_RESULTS]
 
 
@@ -194,7 +140,8 @@ def main():
     movies = fetch_kinopoisk_movies(kinopoisk_api_key)
 
     print("\nСбор данных об аниме...")
-    anime = fetch_shikimori_graphql()
+    shikimori_api_key = os.getenv('SHIKIMORI_API_KEY')
+    anime = fetch_shikimori_graphql(shikimori_api_key)
 
     result = {
        'books': books,
